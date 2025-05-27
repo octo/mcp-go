@@ -134,6 +134,7 @@ type MCPServer struct {
 
 	name                   string
 	version                string
+	protoVersion           string
 	instructions           string
 	resources              map[string]resourceEntry
 	resourceTemplates      map[string]resourceTemplateEntry
@@ -272,6 +273,13 @@ func WithLogging() ServerOption {
 func WithInstructions(instructions string) ServerOption {
 	return func(s *MCPServer) {
 		s.instructions = instructions
+	}
+}
+
+// WithProtocolVersion sets the protocol version the server advertisess as capable of using in the initialize response.
+func WithProtocolVersion(ver string) ServerOption {
+	return func(s *MCPServer) {
+		s.protoVersion = ver
 	}
 }
 
@@ -549,8 +557,13 @@ func (s *MCPServer) handleInitialize(
 		capabilities.Logging = &struct{}{}
 	}
 
+	protoVersion := mcp.LATEST_PROTOCOL_VERSION
+	if s.protoVersion != "" {
+		protoVersion = s.protoVersion
+	}
+
 	result := mcp.InitializeResult{
-		ProtocolVersion: mcp.LATEST_PROTOCOL_VERSION,
+		ProtocolVersion: protoVersion,
 		ServerInfo: mcp.Implementation{
 			Name:    s.name,
 			Version: s.version,
